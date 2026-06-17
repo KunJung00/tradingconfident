@@ -1,0 +1,186 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="Pre-Trade Check">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div id="app" class="bg-white rounded-2xl shadow-2xl p-8 max-w-2xl w-full"></div>
+  </div>
+</Layout>
+
+<script>
+import { createIcons, CheckCircle, XCircle, RefreshCw, ArrowRight } from 'lucide';
+
+const ICONS = { CheckCircle, XCircle, RefreshCw, ArrowRight };
+
+const questions = [
+  {
+    question: "ตอนนี้เรากำลัง 'อยากเทรด' หรือ 'พร้อมเทรด'?",
+    detail: "ต่างกันตรงที่อันหนึ่งมาจากความอยาก อีกอันมาจากความนิ่ง",
+    warning: "อยากเทรด เพราะว่าง เพราะเบื่อ หรือเพราะเมื่อวานแพ้ — ไม่ใช่สัญญาณที่ดี",
+    encouragement: "ถ้าคำตอบคือ 'อยากเทรด' ให้พักสักหน่อย ยอมให้ตัวเองเบื่อโดยไม่ต้องทำอะไรบ้างก็ได้ เพราะใจที่นิ่งจะเห็นโอกาสได้ชัดกว่าใจที่หิว"
+  },
+  {
+    question: "ตอนนี้ใจเราสงบหรือพยายามควบคุมตลาด?",
+    detail: "รู้สึกว่าต้อง 'ทำให้มันเกิด' หรือ 'รอดูให้มันเกิดเอง'?",
+    warning: "ความพยายามควบคุมคืออีโก้ในคราบแผน",
+    encouragement: "ถ้าเริ่มรู้สึกอยากบังคับให้ตลาดวิ่งตามใจ นั่นคือสัญญาณว่าควรถอยออกมาหนึ่งก้าว เปิดเพลงเบาๆ หรือเดินสั้นๆ ก่อนกลับมาใหม่"
+  },
+  {
+    question: "วันนี้เรามีเป้าหมายที่ชัดหรือแค่หวังจะได้กำไร?",
+    detail: "เป้าหมายคือกระบวนการ ส่วนความหวังคืออารมณ์",
+    warning: "ถ้าไม่มีเป้าหมายชัด มันจะกลายเป็นการไล่ตามความรู้สึก",
+    encouragement: "ลองถามตัวเองใหม่อีกที — วันนี้อยากเทรดเพื่อฝึกสติ ฝึกวินัย หรือเพื่อพิสูจน์บางอย่าง? ถ้ายังตอบไม่ได้ ให้ปิดจอไว้ก่อน ตลาดยังไม่หนีไปไหน"
+  },
+  {
+    question: "ตอนนี้ร่างกายบอกอะไรเรา?",
+    detail: "ไหล่เกร็ง มือเย็น หรือใจเต้นแรง?",
+    warning: "ถ้าร่างกายตึง สมองจะมองภาพผิด",
+    encouragement: "หายใจลึกๆ 5 ครั้ง วางมือจากเมาส์ ปล่อยให้อากาศไหลผ่านตัว ถ้ารู้สึกเบาขึ้นเมื่อไหร่ ค่อยกลับมาคิดใหม่อีกที"
+  },
+  {
+    question: "เรากำลังเทรดเพื่อชนะ หรือเพื่อเข้าใจตลาด?",
+    detail: "การเทรดเพื่อชนะคือการแข่ง การเทรดเพื่อเข้าใจคือการเติบโต",
+    warning: "ถ้าตอนนี้มีแต่คำว่า 'ต้องได้' ในหัว — หยุดก่อน มันไม่ใช่ตลาด มันคืออีโก้",
+    encouragement: "เทรดเดอร์ที่ดีไม่ได้ชนะเพราะเขารู้เยอะกว่า แต่เพราะเขายอมรับความไม่แน่นอนได้เร็วกว่า ถ้าวันนี้ใจยังแข็ง อย่าฝืน เทรดเมื่อใจอ่อน"
+  }
+];
+
+let current = 0;
+let answers = [];
+let showEncouragement = false;
+let completed = false;
+
+const app = document.getElementById("app");
+
+function render() {
+  if (completed) {
+    app.innerHTML = `
+      <div class="text-center">
+        <svg data-lucide="check-circle" class="w-24 h-24 text-green-500 mx-auto mb-4"></svg>
+        <h1 class="text-4xl font-bold text-green-600 mb-4">✨ อนุญาตให้เทรด ✨</h1>
+        <div class="bg-green-50 rounded-xl p-6 mb-6 text-left">
+          <p class="text-lg text-gray-700 mb-2">คุณผ่านการเช็กสติทั้ง 5 ข้อแล้ว</p>
+          <p class="text-lg text-gray-700 mb-2">ตอนนี้คุณมีความชัดเจนในสิ่งที่จะทำ มีสติที่ดี และพร้อมรับมือกับผลลัพธ์</p>
+          <p class="text-xl font-semibold text-green-700">
+            เทรดด้วยแผน ไม่ใช่ด้วยอารมณ์<br>
+            เทรดด้วยความมั่นใจ ไม่ใช่ความหวัง<br>
+            เทรดด้วยสติ ไม่ใช่ความเร่งรีบ
+          </p>
+        </div>
+        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6 text-left text-sm text-blue-800">
+          💡 <strong>จำไว้:</strong> ถ้าระหว่างเทรดรู้สึกว่าสติเริ่มหลุด ให้กลับมาทำแบบทดสอบนี้ใหม่ได้เสมอ
+        </div>
+        <div class="flex flex-col sm:flex-row gap-4 justify-center">
+          <button onclick="resetAll()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-8 rounded-lg flex items-center justify-center gap-2">
+            <svg data-lucide="refresh-cw" class="w-5 h-5"></svg> เริ่มใหม่
+          </button>
+          <button onclick="openTradingView()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg flex items-center justify-center gap-2">
+            <svg data-lucide='arrow-right' class='w-5 h-5'></svg> ไปที่กราฟ XAUUSD
+          </button>
+        </div>
+      </div>
+    `;
+    createIcons({ icons: ICONS });
+    return;
+  }
+
+  if (showEncouragement) {
+    const q = questions[current];
+    app.innerHTML = `
+      <div class="text-center">
+        <svg data-lucide="x-circle" class="w-20 h-20 text-orange-500 mx-auto mb-4"></svg>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">ไม่เป็นไร ให้พักสักครู่</h2>
+        <p class="text-gray-600 mb-4">ข้อ ${current + 1}: ${q.question}</p>
+        <div class="bg-orange-50 rounded-xl p-6 mb-6 text-left text-lg text-gray-700">${q.encouragement}</div>
+        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 mb-6 text-left text-sm text-amber-800">
+          <strong>💭 จำไว้:</strong> การยอมรับว่ายังไม่พร้อมนั้นดีกว่าการบังคับเข้าเทรดและเสียเงิน
+        </div>
+        <div class="flex gap-4">
+          <button onclick="resetAll()" class="flex-1 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-lg">เริ่มใหม่ทั้งหมด</button>
+          <button onclick="continueAfterEncouragement()" class="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 px-6 rounded-lg">กลับไปตอบใหม่</button>
+        </div>
+      </div>
+    `;
+    createIcons({ icons: ICONS });
+    return;
+  }
+
+  const q = questions[current];
+  const progress = (current / questions.length) * 100;
+  const answeredDots = answers.map(() => `<div class="w-3 h-3 rounded-full bg-green-500"></div>`).join("");
+
+  app.innerHTML = `
+    <div>
+      <div class="mb-8">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-sm font-semibold text-gray-600">ความคืบหน้า</span>
+          <span class="text-sm font-semibold text-indigo-600">${current}/${questions.length}</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-3">
+          <div class="bg-indigo-500 h-3 rounded-full transition-all duration-500" style="width: ${progress}%"></div>
+        </div>
+      </div>
+
+      <div class="bg-indigo-50 rounded-xl p-6 mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 mb-3">${current + 1}. ${q.question}</h2>
+        <p class="text-gray-600 mb-2">${q.detail}</p>
+        <p class="text-sm text-red-600 font-semibold">⚠️ ${q.warning}</p>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4 mb-6">
+        <button onclick="answer(true)" class="bg-green-500 hover:bg-green-600 text-white font-bold py-4 px-6 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
+          <svg data-lucide='check-circle' class='w-6 h-6'></svg> ตอบได้
+        </button>
+        <button onclick="answer(false)" class="bg-red-500 hover:bg-red-600 text-white font-bold py-4 px-6 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-xl">
+          <svg data-lucide='x-circle' class='w-6 h-6'></svg> ตอบไม่ได้
+        </button>
+      </div>
+
+      <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded text-sm text-blue-800">
+        <strong>💡 เคล็ดลับ:</strong> คำถามเหล่านี้ไม่ใช่ไว้เช็กแผน แต่ไว้เช็ก "สติ" ก่อนแผน
+        ตอบได้ครบ ใจจะนิ่งพอให้เห็นกราฟอย่างที่มันเป็น ไม่ใช่อย่างที่เราอยากให้เป็น
+      </div>
+
+      ${answers.length > 0 ? `<div class="mt-6 flex gap-2 justify-center">${answeredDots}</div>` : ""}
+    </div>
+  `;
+  createIcons({ icons: ICONS });
+}
+
+function answer(can) {
+  if (!can) {
+    showEncouragement = true;
+    render();
+    return;
+  }
+  answers.push(true);
+  if (current < questions.length - 1) {
+    current++;
+  } else {
+    completed = true;
+  }
+  render();
+}
+
+function resetAll() {
+  current = 0;
+  answers = [];
+  showEncouragement = false;
+  completed = false;
+  render();
+}
+
+function continueAfterEncouragement() {
+  showEncouragement = false;
+  render();
+}
+
+function openTradingView() {
+  window.open("https://th.tradingview.com/chart/f56qMsI3/?symbol=COMEX_MINI%3AMGC1%21", "_blank");
+}
+
+// Expose to inline onclick handlers
+Object.assign(window, { answer, resetAll, continueAfterEncouragement, openTradingView });
+
+render();
+</script>

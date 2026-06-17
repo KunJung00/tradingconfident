@@ -1,0 +1,1083 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout title="EdgeIQ — Trading Simulator" dataTheme="light">
+  <Fragment slot="head">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+  </Fragment>
+
+  <div id="loader">
+    <div class="loader-ring"></div>
+    <div class="loader-text">กำลังโหลด...</div>
+  </div>
+
+  <div class="app">
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+      <div class="brand">
+        <div class="brand-mark">
+          <svg viewBox="0 0 16 16"><polyline points="2,11 6,6 9,9 14,4"/><polyline points="10,4 14,4 14,8"/></svg>
+        </div>
+        <span class="brand-name">EdgeIQ</span>
+        <div class="brand-sep"></div>
+        <span class="brand-product">Trading Simulator</span>
+      </div>
+      <div class="topbar-right">
+        <div class="ev-tag">
+          Expected Value / Trade &nbsp;
+          <span class="ev-tag-val" id="ev-chip">+0.694R</span>
+        </div>
+        <button class="theme-btn" id="theme-btn" title="Toggle theme" onclick="toggleTheme()">
+          <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+          </svg>
+          <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+            <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+            <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls-wrap">
+      <div class="section-head" style="margin-bottom:16px;">
+        <span class="section-title">Parameters</span>
+      </div>
+      <div class="controls-inner">
+        <div class="ctrl-item">
+          <div class="ctrl-header">
+            <span class="ctrl-label">Win Rate</span>
+            <span style="display:flex;align-items:center;gap:3px">
+              <input type="number" id="wr-v-input" class="ctrl-val-input" min="1" max="99" step="1" value="22">
+              <span style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--accent)">%</span>
+            </span>
+          </div>
+          <input type="range" id="wr" min="5" max="65" step="1" value="22">
+          <div class="ctrl-sub">% of trades won</div>
+        </div>
+        <div class="ctrl-item">
+          <div class="ctrl-header">
+            <span class="ctrl-label">Avg RR Ratio</span>
+            <input type="number" id="rr-v-input" class="ctrl-val-input" min="0.1" max="999" step="0.1" value="6.7">
+          </div>
+          <input type="range" id="rr" min="0.5" max="20" step="0.1" value="6.7">
+          <div class="ctrl-sub">reward / risk</div>
+        </div>
+        <div class="ctrl-item">
+          <div class="ctrl-header">
+            <span class="ctrl-label">No. of Trades</span>
+            <input type="number" id="nt-v-input" class="ctrl-val-input" min="1" max="10000" step="1" value="100">
+          </div>
+          <input type="range" id="nt" min="20" max="500" step="10" value="100">
+          <div class="ctrl-sub">per simulation</div>
+        </div>
+        <div class="ctrl-item">
+          <div class="ctrl-header">
+            <span class="ctrl-label">Starting Capital</span>
+            <span style="display:flex;align-items:center;gap:3px">
+              <span style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--accent)">$</span>
+              <input type="number" id="cap-v-input" class="ctrl-val-input" min="100" max="100000000" step="100" value="10000">
+            </span>
+          </div>
+          <input type="range" id="cap" min="1000" max="200000" step="1000" value="10000">
+          <div class="ctrl-sub">initial portfolio</div>
+        </div>
+        <div class="ctrl-item">
+          <div class="ctrl-header">
+            <span class="ctrl-label">Risk / Trade</span>
+            <span style="display:flex;align-items:center;gap:3px">
+              <input type="number" id="risk-v-input" class="ctrl-val-input" min="0.01" max="100" step="0.01" value="1.00">
+              <span style="font-family:var(--mono);font-size:13px;font-weight:500;color:var(--accent)">%</span>
+            </span>
+          </div>
+          <input type="range" id="risk" min="0.25" max="5" step="0.25" value="1">
+          <div class="ctrl-sub amber" id="risk-d-sub">= $100 per trade</div>
+        </div>
+        <div class="ctrl-item">
+          <div class="ctrl-header">
+            <span class="ctrl-label">Risk Basis</span>
+          </div>
+          <div class="seg-ctrl" id="compound-toggle" style="margin-top:4px;">
+            <button class="seg-btn active" data-val="fixed">Fixed Capital</button>
+            <button class="seg-btn" data-val="compound">Compounding</button>
+          </div>
+          <div class="ctrl-sub" id="compound-sub">risk $ based on starting capital</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RUN SIMULATION BUTTON -->
+    <div style="display:flex;justify-content:flex-end;margin-top:18px;">
+      <button id="run-btn" style="font-family:var(--mono);font-size:14px;padding:7px 22px;border-radius:var(--radius);border:1px solid var(--accent);background:var(--accent);color:#fff;cursor:pointer;transition:background 0.2s;">Run Simulation</button>
+    </div>
+
+    <!-- METRICS -->
+    <div class="metrics-grid">
+      <div class="metric">
+        <div class="metric-label">Expected Value</div>
+        <div class="metric-value c-green" id="m-ev">+0.694R</div>
+        <div class="metric-sub">per trade</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Profit Probability</div>
+        <div class="metric-value" id="m-prob">—</div>
+        <div class="metric-sub" id="m-prob-s">over N trades</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Median Return</div>
+        <div class="metric-value" id="m-ret">—</div>
+        <div class="metric-sub" id="m-ret-d">—</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Median Portfolio</div>
+        <div class="metric-value c-blue" id="m-fin">—</div>
+        <div class="metric-sub">final value</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Avg Max Drawdown</div>
+        <div class="metric-value c-red" id="m-mdd">—</div>
+        <div class="metric-sub">across all paths</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Ruin Risk</div>
+        <div class="metric-value" id="m-ruin">—</div>
+        <div class="metric-sub">paths below 20%</div>
+      </div>
+    </div>
+
+    <!-- MAIN CHARTS -->
+    <div class="charts-main">
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <span class="chart-card-title">Portfolio Paths — 500 Simulations</span>
+          <div class="legend">
+            <div class="leg"><span class="leg-dot" style="background:var(--red);opacity:0.6;"></span>Bottom 10%</div>
+            <div class="leg"><span class="leg-dot" style="background:var(--accent);opacity:0.6;"></span>Top 10%</div>
+            <div class="leg"><span class="leg-dot" style="background:var(--green);"></span>Median</div>
+            <div class="leg"><span class="leg-line" style="border-color:var(--text-3);"></span>Breakeven</div>
+          </div>
+        </div>
+        <div style="position:relative;width:100%;height:300px;">
+          <canvas id="simChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <span class="chart-card-title">Final Distribution</span>
+        </div>
+        <div style="position:relative;width:100%;height:338px;">
+          <canvas id="distChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- BOTTOM CHARTS -->
+    <div class="charts-bottom">
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <span class="chart-card-title">Median Return vs Risk %</span>
+        </div>
+        <div style="position:relative;width:100%;height:190px;">
+          <canvas id="riskChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <span class="chart-card-title">Drawdown Distribution</span>
+        </div>
+        <div style="position:relative;width:100%;height:190px;">
+          <canvas id="ddChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <span class="chart-card-title">Win Rate Sensitivity</span>
+        </div>
+        <div style="position:relative;width:100%;height:190px;">
+          <canvas id="wrChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="footer-brand">EdgeIQ · Monte Carlo Simulation · 500 Paths</span>
+      <span class="footer-params" id="footer-p">WR:22% · RR:6.7 · RISK:1.00% · CAP:$10,000</span>
+    </div>
+
+  </div>
+</Layout>
+
+<style is:global>
+:root {
+  --font: 'DM Sans', sans-serif;
+  --mono: 'DM Mono', monospace;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --transition: 0.2s ease;
+}
+
+[data-theme="light"] {
+  --bg:        #f5f5f3;
+  --bg-panel:  #ffffff;
+  --bg-input:  #f0f0ee;
+  --bg-hover:  #e8e8e5;
+  --border:    #e2e2de;
+  --border-strong: #c8c8c4;
+  --text:      #1a1a18;
+  --text-2:    #6b6b68;
+  --text-3:    #9e9e9a;
+  --accent:    #1a56db;
+  --accent-bg: #eff4ff;
+  --green:     #0e7d5b;
+  --green-bg:  #ecfdf5;
+  --red:       #b91c1c;
+  --red-bg:    #fef2f2;
+  --amber:     #92400e;
+  --amber-bg:  #fffbeb;
+  --chart-grid: rgba(0,0,0,0.05);
+  --chart-tick: #9e9e9a;
+  --shadow:    0 1px 3px rgba(0,0,0,0.07), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+[data-theme="dark"] {
+  --bg:        #111110;
+  --bg-panel:  #1c1c1a;
+  --bg-input:  #252523;
+  --bg-hover:  #2e2e2b;
+  --border:    #2e2e2b;
+  --border-strong: #3e3e3a;
+  --text:      #e8e8e4;
+  --text-2:    #8a8a86;
+  --text-3:    #5a5a56;
+  --accent:    #4e8ef7;
+  --accent-bg: #1a2540;
+  --green:     #34d399;
+  --green-bg:  #0a2a1e;
+  --red:       #f87171;
+  --red-bg:    #2a0e0e;
+  --amber:     #fbbf24;
+  --amber-bg:  #291e08;
+  --chart-grid: rgba(255,255,255,0.05);
+  --chart-tick: #5a5a56;
+  --shadow:    0 1px 3px rgba(0,0,0,0.3);
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 14px; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  transition: background var(--transition), color var(--transition);
+  -webkit-font-smoothing: antialiased;
+}
+
+.app {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 0 24px 64px;
+}
+
+.topbar {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 32px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-mark {
+  width: 28px; height: 28px;
+  background: var(--accent);
+  border-radius: 6px;
+  display: flex; align-items:center; justify-content:center;
+}
+
+.brand-mark svg {
+  width: 16px; height: 16px;
+  fill: none;
+  stroke: white;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.brand-name {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.brand-sep {
+  width: 1px; height: 18px;
+  background: var(--border);
+}
+
+.brand-product {
+  font-size: 13px;
+  color: var(--text-2);
+  font-weight: 400;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ev-tag {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 12px;
+  background: var(--accent-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.ev-tag-val {
+  font-weight: 500;
+  font-size: 13px;
+}
+
+.theme-btn {
+  width: 34px; height: 34px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: flex; align-items:center; justify-content:center;
+  color: var(--text-2);
+  transition: background var(--transition), color var(--transition), border-color var(--transition);
+}
+
+.theme-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+  border-color: var(--border-strong);
+}
+
+.theme-btn svg { width: 16px; height: 16px; }
+
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.controls-wrap {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow);
+}
+
+.controls-inner {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 24px;
+}
+
+.ctrl-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 8px;
+}
+
+.ctrl-label {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-2);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ctrl-val {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.ctrl-val.accent { color: var(--accent); }
+.ctrl-val.amber { color: var(--amber); }
+
+.ctrl-val-input {
+  font-family: var(--mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2px 6px;
+  width: 72px;
+  text-align: right;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.ctrl-val-input:focus {
+  border-color: var(--accent);
+  background: var(--bg-panel);
+}
+.ctrl-val-input::-webkit-inner-spin-button,
+.ctrl-val-input::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+.ctrl-val-input[type=number] { -moz-appearance: textfield; }
+
+.seg-ctrl {
+  display: flex;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2px;
+  gap: 2px;
+}
+.seg-btn {
+  flex: 1;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--text-2);
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+.seg-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+input[type=range] {
+  width: 100%;
+  -webkit-appearance: none;
+  height: 3px;
+  background: var(--border);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+  transition: background var(--transition);
+}
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 16px; height: 16px;
+  background: var(--bg-panel);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: border-color var(--transition), transform 0.15s;
+}
+
+input[type=range]:hover::-webkit-slider-thumb {
+  transform: scale(1.15);
+}
+
+input[type=range]::-moz-range-thumb {
+  width: 14px; height: 14px;
+  background: var(--bg-panel);
+  border: 2px solid var(--accent);
+  border-radius: 50%;
+}
+
+.ctrl-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 5px;
+  font-family: var(--mono);
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0,1fr));
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.metric {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.metric-label {
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+
+.metric-value {
+  font-family: var(--mono);
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.metric-sub {
+  font-size: 11px;
+  color: var(--text-3);
+  margin-top: 5px;
+}
+
+.c-green { color: var(--green); }
+.c-red   { color: var(--red); }
+.c-amber { color: var(--amber); }
+.c-blue  { color: var(--accent); }
+.c-text  { color: var(--text); }
+
+.charts-main {
+  display: grid;
+  grid-template-columns: 7fr 3fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.charts-bottom {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.chart-card {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  transition: background var(--transition), border-color var(--transition);
+}
+
+.chart-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.chart-card-title {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-2);
+  letter-spacing: 0.03em;
+}
+
+.legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.leg {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+.leg-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.leg-line {
+  width: 14px; height: 2px;
+  border-top: 2px dashed;
+  flex-shrink: 0;
+}
+
+.footer {
+  margin-top: 40px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.footer-brand {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-3);
+}
+
+.footer-params {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+}
+
+#loader {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 999;
+  display: flex; align-items:center; justify-content:center;
+  flex-direction: column; gap: 14px;
+  transition: opacity 0.4s;
+}
+#loader.out { opacity: 0; pointer-events: none; }
+.loader-ring {
+  width: 28px; height: 28px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loader-text {
+  font-size: 12px;
+  color: var(--text-3);
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 1100px) {
+  .controls-inner { grid-template-columns: repeat(3, 1fr); }
+  .metrics-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 860px) {
+  .charts-main { grid-template-columns: 1fr; }
+  .charts-bottom { grid-template-columns: 1fr; }
+  .controls-inner { grid-template-columns: repeat(2, 1fr); }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .ev-tag { display: none; }
+}
+@media (max-width: 500px) {
+  .controls-inner { grid-template-columns: 1fr; }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .metric-value { font-size: 18px; }
+  .app { padding: 0 16px 48px; }
+}
+</style>
+
+<script>
+import Chart from 'chart.js/auto';
+
+function getTheme() { return document.documentElement.getAttribute('data-theme'); }
+function toggleTheme() {
+  const next = getTheme() === 'light' ? 'dark' : 'light';
+  document.documentElement.setAttribute('data-theme', next);
+  document.getElementById('icon-moon').style.display = next === 'dark' ? 'none' : 'block';
+  document.getElementById('icon-sun').style.display  = next === 'dark' ? 'block' : 'none';
+  setTimeout(() => { destroyAll(); buildAllCharts(lastRes, lastParams); }, 220);
+}
+
+window.toggleTheme = toggleTheme;
+
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+const PATHS = 500;
+let lastRes = null, lastParams = null;
+
+function simulate(wr, rr, n, start, riskPct, compound = false) {
+  const out = [];
+  for (let p = 0; p < PATHS; p++) {
+    let bal = start, peak = start, mdd = 0;
+    const path = [bal];
+    for (let i = 0; i < n; i++) {
+      const win = Math.random() < wr;
+      const base = compound ? bal : start;
+      bal = win ? bal + base * riskPct * rr : bal - base * riskPct;
+      if (bal <= 0) bal = 0;
+      if (bal > peak) peak = bal;
+      const dd = peak > 0 ? (peak - bal) / peak : 0;
+      if (dd > mdd) mdd = dd;
+      path.push(bal);
+    }
+    out.push({ path, final: bal, mdd });
+  }
+  return out;
+}
+
+let CH = {};
+function destroyAll() { Object.values(CH).forEach(c => c && c.destroy()); CH = {}; }
+
+function baseOpts() {
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    animation: false,
+    plugins: { legend: { display: false } },
+  };
+}
+
+function axOpts(extraX = {}, extraY = {}) {
+  const grid = cssVar('--chart-grid');
+  const tick = cssVar('--chart-tick');
+  return {
+    x: {
+      ticks: { color: tick, font: { family: "'DM Mono', monospace", size: 10 } },
+      grid: { display: false },
+      ...extraX
+    },
+    y: {
+      ticks: { color: tick, font: { family: "'DM Mono', monospace", size: 10 } },
+      grid: { color: grid },
+      ...extraY
+    }
+  };
+}
+
+function tooltipOpts(labelCb) {
+  return {
+    backgroundColor: cssVar('--bg-panel'),
+    titleColor: cssVar('--text'),
+    bodyColor: cssVar('--text-2'),
+    borderColor: cssVar('--border'),
+    borderWidth: 1,
+    padding: 10,
+    cornerRadius: 6,
+    titleFont: { family: "'DM Mono', monospace", size: 11 },
+    bodyFont: { family: "'DM Mono', monospace", size: 11 },
+    callbacks: { label: labelCb }
+  };
+}
+
+function buildSimChart(res, n, start) {
+  const labels = Array.from({ length: n + 1 }, (_, i) => i);
+  const sorted = [...res].sort((a, b) => a.final - b.final);
+  const b10 = sorted.slice(0, Math.floor(PATHS * 0.1));
+  const t10 = sorted.slice(Math.floor(PATHS * 0.9));
+  const mid = sorted.slice(Math.floor(PATHS * 0.45), Math.floor(PATHS * 0.55));
+
+  const red  = cssVar('--red');
+  const blue = cssVar('--accent');
+  const grn  = cssVar('--green');
+  const ds = [];
+  b10.forEach(r => ds.push({ data: r.path, borderColor: red + '33',  borderWidth: 0.8, pointRadius: 0, tension: 0.3 }));
+  t10.forEach(r => ds.push({ data: r.path, borderColor: blue + '33', borderWidth: 0.8, pointRadius: 0, tension: 0.3 }));
+  mid.forEach(r => ds.push({ data: r.path, borderColor: grn + '55',  borderWidth: 1,   pointRadius: 0, tension: 0.3 }));
+  ds.push({ data: sorted[Math.floor(PATHS / 2)].path, borderColor: grn, borderWidth: 2.2, pointRadius: 0, tension: 0.3 });
+  ds.push({ data: Array(n + 1).fill(start), borderColor: cssVar('--text-3'), borderWidth: 1, borderDash: [5, 4], pointRadius: 0 });
+
+  const ax = axOpts(
+    { title: { display: true, text: 'trades', color: cssVar('--text-3'), font: { size: 10, family: "'DM Mono', monospace" } }, ticks: { maxTicksLimit: 8, color: cssVar('--chart-tick'), font: { size: 10, family: "'DM Mono', monospace" } } },
+    { ticks: { color: cssVar('--chart-tick'), font: { size: 10, family: "'DM Mono', monospace" }, callback: v => '$' + Math.round(v).toLocaleString() }, grid: { color: cssVar('--chart-grid') } }
+  );
+
+  CH.sim = new Chart(document.getElementById('simChart'), {
+    type: 'line',
+    data: { labels, datasets: ds },
+    options: { ...baseOpts(), plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: ax }
+  });
+}
+
+function buildDistChart(res, start) {
+  const finals = res.map(r => r.final);
+  const mn = Math.min(...finals), mx = Math.max(...finals);
+  const bins = 22, step = (mx - mn) / bins || 1;
+  const counts = Array(bins).fill(0);
+  finals.forEach(f => { const bi = Math.min(Math.floor((f - mn) / step), bins - 1); counts[bi]++; });
+  const labels = counts.map((_, i) => '$' + Math.round(mn + i * step).toLocaleString());
+  const red = cssVar('--red'), grn = cssVar('--green');
+  const cols = counts.map((_, i) => (mn + i * step) < start ? red + 'bb' : grn + 'bb');
+
+  const ax = axOpts(
+    { ticks: { color: cssVar('--chart-tick'), font: { size: 9, family: "'DM Mono', monospace" } }, grid: { display: false } },
+    { ticks: { color: cssVar('--chart-tick'), font: { size: 10, family: "'DM Mono', monospace" } }, grid: { color: cssVar('--chart-grid') } }
+  );
+
+  CH.dist = new Chart(document.getElementById('distChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: counts, backgroundColor: cols, borderWidth: 0, borderRadius: 3 }] },
+    options: {
+      ...baseOpts(), indexAxis: 'y',
+      plugins: { legend: { display: false }, tooltip: { ...tooltipOpts(c => c.raw + ' paths') } },
+      scales: ax
+    }
+  });
+}
+
+function buildRiskChart(wr, rr, n, start, compound = false) {
+  const lvls = [0.25, 0.5, 1, 1.5, 2, 3, 5];
+  const meds = lvls.map(r => {
+    const res = simulate(wr, rr, n, start, r / 100, compound);
+    const f = res.map(x => x.final).sort((a, b) => a - b);
+    return +((f[Math.floor(PATHS / 2)] - start) / start * 100).toFixed(1);
+  });
+  const grn = cssVar('--green'), amb = cssVar('--amber'), red = cssVar('--red');
+  const cols = lvls.map(r => r <= 1 ? grn + 'cc' : r <= 2 ? amb + 'cc' : red + 'cc');
+
+  const ax = axOpts(
+    { title: { display: true, text: 'risk / trade', color: cssVar('--text-3'), font: { size: 10, family: "'DM Mono', monospace" } }, ticks: { color: cssVar('--chart-tick'), font: { size: 10, family: "'DM Mono', monospace" } }, grid: { display: false } },
+    { ticks: { color: cssVar('--chart-tick'), font: { size: 10, family: "'DM Mono', monospace" }, callback: v => (v >= 0 ? '+' : '') + v.toFixed(0) + '%' }, grid: { color: cssVar('--chart-grid') } }
+  );
+
+  CH.risk = new Chart(document.getElementById('riskChart'), {
+    type: 'bar',
+    data: { labels: lvls.map(r => r + '%'), datasets: [{ data: meds, backgroundColor: cols, borderWidth: 0, borderRadius: 3 }] },
+    options: {
+      ...baseOpts(),
+      plugins: { legend: { display: false }, tooltip: { ...tooltipOpts(c => (c.raw >= 0 ? '+' : '') + c.raw.toFixed(1) + '%') } },
+      scales: ax
+    }
+  });
+}
+
+function buildDDChart(res) {
+  const dds = res.map(r => r.mdd * 100);
+  const mx = Math.min(100, Math.max(...dds));
+  const bins = 20, step = mx / bins || 1;
+  const counts = Array(bins).fill(0);
+  dds.forEach(d => { const bi = Math.min(Math.floor(d / step), bins - 1); counts[bi]++; });
+  const labels = counts.map((_, i) => (i * step).toFixed(0) + '%');
+  const grn = cssVar('--green'), amb = cssVar('--amber'), red = cssVar('--red');
+  const cols = counts.map((_, i) => { const v = i * step; return v < 20 ? grn + 'cc' : v < 40 ? amb + 'cc' : red + 'cc'; });
+
+  const ax = axOpts(
+    { title: { display: true, text: 'drawdown', color: cssVar('--text-3'), font: { size: 10, family: "'DM Mono', monospace" } }, ticks: { maxTicksLimit: 6, color: cssVar('--chart-tick'), font: { size: 10, family: "'DM Mono', monospace" } }, grid: { display: false } },
+    { ticks: { color: cssVar('--chart-tick'), font: { size: 10, family: "'DM Mono', monospace" } }, grid: { color: cssVar('--chart-grid') } }
+  );
+
+  CH.dd = new Chart(document.getElementById('ddChart'), {
+    type: 'bar',
+    data: { labels, datasets: [{ data: counts, backgroundColor: cols, borderWidth: 0, borderRadius: 3 }] },
+    options: {
+      ...baseOpts(),
+      plugins: { legend: { display: false }, tooltip: { ...tooltipOpts(c => c.raw + ' paths') } },
+      scales: ax
+    }
+  });
+}
+
+function buildWRChart(rr, n, start, riskPct, compound = false) {
+  const wrs = [8, 12, 16, 20, 25, 30, 35, 40, 50];
+  const probs = wrs.map(w => {
+    const res = simulate(w / 100, rr, n, start, riskPct, compound);
+    return +(res.filter(r => r.final > start).length / PATHS * 100).toFixed(1);
+  });
+  const blue = cssVar('--accent');
+
+  const ax = axOpts(
+    { title: { display: true, text: 'win rate', color: cssVar('--text-3'), font: { size: 10, family: "'DM Mono', monospace" } }, ticks: { color: cssVar('--chart-tick'), font: { size: 10, family: "'DM Mono', monospace" } }, grid: { display: false } },
+    { ticks: { color: cssVar('--chart-tick'), font: { size: 10, family: "'DM Mono', monospace" }, callback: v => v + '%' }, grid: { color: cssVar('--chart-grid') }, min: 0, max: 100 }
+  );
+
+  CH.wr = new Chart(document.getElementById('wrChart'), {
+    type: 'line',
+    data: {
+      labels: wrs.map(w => w + '%'),
+      datasets: [{
+        data: probs, borderColor: blue, borderWidth: 2,
+        backgroundColor: blue + '18', fill: true,
+        pointBackgroundColor: blue,
+        pointRadius: 4, pointHoverRadius: 6, tension: 0.35
+      }]
+    },
+    options: {
+      ...baseOpts(),
+      plugins: { legend: { display: false }, tooltip: { ...tooltipOpts(c => c.raw + '% profitable') } },
+      scales: ax
+    }
+  });
+}
+
+function buildAllCharts(res, params) {
+  const { wr, rr, nt, cap, rp, compound } = params;
+  buildSimChart(res, nt, cap);
+  buildDistChart(res, cap);
+  buildRiskChart(wr, rr, nt, cap, compound);
+  buildDDChart(res);
+  buildWRChart(rr, nt, cap, rp, compound);
+}
+
+function update() {
+  const wr = (parseFloat(document.getElementById('wr-v-input').value) || parseFloat(document.getElementById('wr').value)) / 100;
+  const rr = parseFloat(document.getElementById('rr-v-input').value) || parseFloat(document.getElementById('rr').value);
+  const nt = parseInt(document.getElementById('nt-v-input').value) || parseInt(document.getElementById('nt').value);
+  const cap = parseInt(document.getElementById('cap-v-input').value) || parseInt(document.getElementById('cap').value);
+  const rp = parseFloat(document.getElementById('risk-v-input').value || document.getElementById('risk').value) / 100;
+  const compound = document.querySelector('#compound-toggle .seg-btn.active').dataset.val === 'compound';
+
+  document.getElementById('wr-v-input').value = Math.round(wr * 100);
+  document.getElementById('rr-v-input').value = rr.toFixed(1);
+  document.getElementById('nt-v-input').value = nt;
+  document.getElementById('cap-v-input').value = cap;
+  const riskInput = document.getElementById('risk-v-input');
+  if (document.activeElement !== riskInput) {
+    riskInput.value = (rp * 100).toFixed(2);
+  }
+  document.getElementById('risk-d-sub').textContent = '= $' + Math.round(cap * rp).toLocaleString() + ' per trade';
+
+  const ev = wr * rr - (1 - wr);
+  const evStr = (ev >= 0 ? '+' : '') + ev.toFixed(3) + 'R';
+  document.getElementById('ev-chip').textContent = evStr;
+  document.getElementById('ev-chip').style.color = ev >= 0 ? cssVar('--green') : cssVar('--red');
+  document.getElementById('m-ev').textContent = evStr;
+  document.getElementById('m-ev').className = 'metric-value ' + (ev >= 0 ? 'c-green' : 'c-red');
+
+  const res = simulate(wr, rr, nt, cap, rp, compound);
+  lastRes = res; lastParams = { wr, rr, nt, cap, rp, compound };
+
+  const finals = res.map(r => r.final).sort((a, b) => a - b);
+  const prof  = finals.filter(f => f > cap).length;
+  const prob  = (prof / finals.length * 100).toFixed(1);
+  const med   = finals[Math.floor(finals.length / 2)];
+  const medRet = ((med - cap) / cap * 100).toFixed(1);
+  const mProfit = med - cap;
+  const avgMdd = (res.reduce((s, r) => s + r.mdd, 0) / res.length * 100).toFixed(1);
+  const ruin = (res.filter(r => r.final < cap * 0.2).length / PATHS * 100).toFixed(1);
+
+  function sm(id, val, cls) {
+    const el = document.getElementById(id);
+    el.textContent = val;
+    if (cls) el.className = 'metric-value ' + cls;
+  }
+
+  sm('m-prob', prob + '%', parseFloat(prob) > 50 ? 'c-green' : 'c-red');
+  document.getElementById('m-prob-s').textContent = 'over ' + nt + ' trades';
+  sm('m-ret', (parseFloat(medRet) >= 0 ? '+' : '') + medRet + '%', parseFloat(medRet) >= 0 ? 'c-green' : 'c-red');
+  document.getElementById('m-ret-d').textContent = (mProfit >= 0 ? '+$' : '-$') + Math.abs(Math.round(mProfit)).toLocaleString();
+  sm('m-fin', '$' + Math.round(med).toLocaleString(), 'c-blue');
+  sm('m-mdd', '-' + avgMdd + '%', 'c-red');
+  sm('m-ruin', ruin + '%', parseFloat(ruin) < 5 ? 'c-green' : parseFloat(ruin) < 15 ? 'c-amber' : 'c-red');
+
+  document.getElementById('footer-p').textContent =
+    `WR:${Math.round(wr*100)}% · RR:${rr.toFixed(1)} · RISK:${(rp*100).toFixed(2)}% · CAP:$${cap.toLocaleString()}`;
+
+  destroyAll();
+  buildAllCharts(res, { wr, rr, nt, cap, rp, compound });
+}
+
+document.getElementById('wr').addEventListener('input', function() {
+  document.getElementById('wr-v-input').value = Math.round(this.value);
+});
+document.getElementById('rr').addEventListener('input', function() {
+  document.getElementById('rr-v-input').value = parseFloat(this.value).toFixed(1);
+});
+document.getElementById('nt').addEventListener('input', function() {
+  document.getElementById('nt-v-input').value = this.value;
+});
+document.getElementById('cap').addEventListener('input', function() {
+  document.getElementById('cap-v-input').value = this.value;
+});
+document.getElementById('run-btn').addEventListener('click', update);
+
+document.getElementById('risk').addEventListener('input', function() {
+  const riskInput = document.getElementById('risk-v-input');
+  riskInput.value = parseFloat(this.value).toFixed(2);
+  const cap = parseInt(document.getElementById('cap').value);
+  const rp = parseFloat(this.value) / 100;
+  document.getElementById('risk-d-sub').textContent = '= $' + Math.round(cap * rp).toLocaleString() + ' per trade';
+});
+
+document.getElementById('risk-v-input').addEventListener('input', function() {
+  let v = parseFloat(this.value);
+  if (!isNaN(v) && v > 0) {
+    const clampedSlider = Math.min(5, Math.max(0.25, v));
+    document.getElementById('risk').value = clampedSlider;
+    const cap = parseInt(document.getElementById('cap').value);
+    const rp = v / 100;
+    document.getElementById('risk-d-sub').textContent = '= $' + Math.round(cap * rp).toLocaleString() + ' per trade';
+  }
+});
+document.getElementById('risk-v-input').addEventListener('change', function() {
+  let v = parseFloat(this.value);
+  if (isNaN(v) || v <= 0) {
+    this.value = '1.00';
+    document.getElementById('risk').value = '1';
+    const cap = parseInt(document.getElementById('cap').value);
+    document.getElementById('risk-d-sub').textContent = '= $' + Math.round(cap * 0.01).toLocaleString() + ' per trade';
+  }
+});
+
+document.querySelectorAll('#compound-toggle .seg-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('#compound-toggle .seg-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    const isCompound = this.dataset.val === 'compound';
+    document.getElementById('compound-sub').textContent = isCompound
+      ? 'risk % of current balance each trade'
+      : 'risk $ based on starting capital';
+  });
+});
+
+document.getElementById('wr-v-input').addEventListener('input', function() {
+  const v = parseFloat(this.value);
+  if (!isNaN(v) && v > 0) document.getElementById('wr').value = Math.min(65, Math.max(5, v));
+});
+document.getElementById('wr-v-input').addEventListener('change', function() {
+  const v = parseFloat(this.value);
+  if (isNaN(v) || v <= 0 || v >= 100) { this.value = '22'; document.getElementById('wr').value = '22'; }
+});
+
+document.getElementById('rr-v-input').addEventListener('input', function() {
+  const v = parseFloat(this.value);
+  if (!isNaN(v) && v > 0) document.getElementById('rr').value = Math.min(20, Math.max(0.5, v));
+});
+document.getElementById('rr-v-input').addEventListener('change', function() {
+  const v = parseFloat(this.value);
+  if (isNaN(v) || v <= 0) { this.value = '6.7'; document.getElementById('rr').value = '6.7'; }
+});
+
+document.getElementById('nt-v-input').addEventListener('input', function() {
+  const v = parseInt(this.value);
+  if (!isNaN(v) && v > 0) document.getElementById('nt').value = Math.min(500, Math.max(20, v));
+});
+document.getElementById('nt-v-input').addEventListener('change', function() {
+  const v = parseInt(this.value);
+  if (isNaN(v) || v <= 0) { this.value = '100'; document.getElementById('nt').value = '100'; }
+});
+
+document.getElementById('cap-v-input').addEventListener('input', function() {
+  const v = parseInt(this.value);
+  if (!isNaN(v) && v > 0) document.getElementById('cap').value = Math.min(200000, Math.max(1000, v));
+});
+document.getElementById('cap-v-input').addEventListener('change', function() {
+  const v = parseInt(this.value);
+  if (isNaN(v) || v <= 0) { this.value = '10000'; document.getElementById('cap').value = '10000'; }
+});
+
+window.addEventListener('load', () => {
+  update();
+  setTimeout(() => document.getElementById('loader').classList.add('out'), 600);
+});
+</script>
